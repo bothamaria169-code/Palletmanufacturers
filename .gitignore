@@ -1,0 +1,18 @@
+# ── Never in GitHub ──────────────────────────────────────────────
+config/secrets.php
+*.env
+.env*
+
+# Uploaded product photos live on the server only
+uploads/products/*
+!uploads/products/.gitkeep
+
+# Tooling and junk
+.claude/
+_scrape/
+composer.phar
+*.zip
+*.log
+error_log
+.DS_Store
+Thumbs.db

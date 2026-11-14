@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /ajax/
+Disallow: /dashboard.php
+Disallow: /account.php
+Disallow: /quotes.php
+Disallow: /quote-view.php
+
+Sitemap: https://durbanspallets.co.za/sitemap.php
