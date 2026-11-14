@@ -87,12 +87,18 @@ function addQuoteMessage(int $quoteId, ?int $userId, bool $fromAdmin, string $bo
         ->execute([$quoteId, $userId, $fromAdmin ? 1 : 0, $body]);
     $q = quoteById($quoteId);
     if ($fromAdmin) {
-        sendMail($q['email'], 'Message about your quote ' . $q['ref'], emailLayout('New message about quote ' . e($q['ref']),
-            '<p style="white-space:pre-line">' . e($body) . '</p>', 'View & reply', quoteLink($quoteId)), [], biz('biz_email'), 'quote_message');
+        [$subject, $html] = renderTemplate('quote_message', ['name' => explode(' ', $q['full_name'])[0], 'ref' => $q['ref'], 'message' => $body]);
+        sendMail($q['email'], $subject, emailLayout('', $html, templateButton('quote_message'), quoteLink($quoteId)), [], SALES_EMAIL, 'quote_message', ['mailbox' => 'sales']);
     } else {
-        sendMail(get_setting('notify_email', ADMIN_EMAIL), 'Customer message on ' . $q['ref'], emailLayout('Message from ' . e($q['full_name']),
-            '<p style="white-space:pre-line">' . e($body) . '</p>', 'Open quote', APP_URL . '/admin/quote.php?id=' . $quoteId), [], $q['email'], 'quote_message_admin');
+        sendMail(notifyEmail(), 'Customer message on ' . $q['ref'], emailLayout('Message from ' . e($q['full_name']),
+            '<p style="white-space:pre-line">' . e($body) . '</p>', 'Open quote', APP_URL . '/admin/quote.php?id=' . $quoteId), [], $q['email'], 'quote_message_admin', ['mailbox' => 'sales']);
     }
+}
+
+/** Where new quote requests, enquiries and customer messages are announced. */
+function notifyEmail(): string
+{
+    return get_setting('notify_email', SALES_EMAIL);
 }
 
 function quoteItemsTableHtml(array $q, bool $forEmail = true): string
@@ -118,18 +124,16 @@ function quoteItemsTableHtml(array $q, bool $forEmail = true): string
 function notifyNewQuote(array $q): void
 {
     $items = quoteItemsTableHtml($q);
-    sendMail(get_setting('notify_email', ADMIN_EMAIL), 'New quote request ' . $q['ref'] . ' – ' . $q['full_name'], emailLayout('New quote request ' . e($q['ref']),
+    sendMail(notifyEmail(), 'New quote request ' . $q['ref'] . ' – ' . $q['full_name'], emailLayout('New quote request ' . e($q['ref']),
         emailRows(['Name' => $q['full_name'], 'Company' => $q['company_name'] ?: '—', 'Email' => $q['email'], 'Phone' => $q['phone'] ?: '—',
                    'Deliver to' => trim(($q['delivery_address'] ?? '') . ', ' . ($q['city'] ?? '') . ', ' . ($q['province'] ?? ''), ', ') ?: '—',
                    'Needed by' => $q['needed_by'] ?: '—'])
         . ($q['message'] ? '<p style="margin-top:16px;white-space:pre-line"><strong>Message:</strong><br>' . e($q['message']) . '</p>' : '')
         . '<div style="margin-top:18px">' . $items . '</div>',
-        'Price this quote', APP_URL . '/admin/quote.php?id=' . $q['id']), [], $q['email'], 'quote_admin');
+        'Price this quote', APP_URL . '/admin/quote.php?id=' . $q['id']), [], $q['email'], 'quote_admin', ['mailbox' => 'sales']);
 
-    sendMail($q['email'], 'We received your quote request ' . $q['ref'], emailLayout('Thanks, ' . e(explode(' ', $q['full_name'])[0]) . ' — we\'re on it',
-        '<p>Your quote request <strong>' . e($q['ref']) . '</strong> is with our sales team. We\'ll confirm prices, stock and delivery to you, usually within one working day.</p>'
-        . '<div style="margin:18px 0">' . $items . '</div><p style="color:#7c8899;font-size:13px">Prices shown are our current list prices. ' . e(vatNote()) . ' Delivery is confirmed on the final quote.</p>',
-        'Track my quote', quoteLink((int) $q['id'])), [], biz('biz_email'), 'quote_customer');
+    [$subject, $html] = renderTemplate('quote_received', ['name' => explode(' ', $q['full_name'])[0], 'ref' => $q['ref']], ['items' => $items]);
+    sendMail($q['email'], $subject, emailLayout('', $html, templateButton('quote_received'), quoteLink((int) $q['id'])), [], SALES_EMAIL, 'quote_customer', ['mailbox' => 'sales']);
 }
 
 /** Emails the priced quote to the customer and marks it sent. */
@@ -139,16 +143,14 @@ function sendQuoteToCustomer(int $id): string
     if (!$q) return 'Quote not found.';
     getDB()->prepare("UPDATE quotes SET status = 'quoted', quoted_at = NOW(), valid_until = COALESCE(valid_until, CURDATE() + INTERVAL 14 DAY) WHERE id = ?")->execute([$id]);
     $q = quoteById($id);
-    $hasAccount = (bool) findUserByEmail($q['email']);
-    $body = '<p>Here is your quote <strong>' . e($q['ref']) . '</strong>' . ($q['valid_until'] ? ', valid until <strong>' . date('j F Y', strtotime($q['valid_until'])) . '</strong>' : '') . '.</p>'
-          . '<div style="margin:18px 0">' . quoteItemsTableHtml($q) . '</div>'
-          . ($q['customer_note'] ? '<p style="white-space:pre-line;background:#fdf4e7;border-radius:10px;padding:12px">' . e($q['customer_note']) . '</p>' : '')
-          . '<p style="color:#7c8899;font-size:13px">' . e(vatNote()) . '</p>'
-          . ($hasAccount ? '<p>Accept it in your dashboard and we\'ll send the invoice and arrange delivery.</p>'
-                         : '<p>Accept it online with the button below, or reply to this email. Create a free account with this email address to keep all your quotes in one place.</p>');
-    return sendMail($q['email'], 'Your quote ' . $q['ref'] . ' from ' . APP_NAME, emailLayout('Your pallet quote', $body,
-        'View & accept quote', quoteLink($id)),
-        [], biz('biz_email'), 'quote_sent');
+    require_once __DIR__ . '/documents.php';
+    [$subject, $html] = renderTemplate('quote_sent', [
+        'name' => explode(' ', $q['full_name'])[0], 'ref' => $q['ref'], 'total' => rand_($q['total'], true),
+        'valid_until' => $q['valid_until'] ? date('j F Y', strtotime($q['valid_until'])) : '14 days',
+        'note' => (string) $q['customer_note'],
+    ], ['items' => quoteItemsTableHtml($q)]);
+    return sendMail($q['email'], $subject, emailLayout('', $html, templateButton('quote_sent'), quoteLink($id)), [], SALES_EMAIL, 'quote_sent',
+        ['mailbox' => 'sales', 'files' => [[quotePdf($q), 'Quote-' . $q['ref'] . '.pdf']]]);
 }
 
 function quoteCounts(?int $userId = null): array

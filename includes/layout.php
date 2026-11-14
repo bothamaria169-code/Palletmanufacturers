@@ -276,6 +276,7 @@ function appOpen(string $active, string $title, string $sub = '', string $action
         'My quotes' => [
             ['dashboard', 'dashboard.php', 'fa-gauge-high', 'Dashboard', 0],
             ['quotes',    'quotes.php',    'fa-file-invoice', 'All quotes', $counts['quoted']],
+            ['invoices',  'invoices.php',  'fa-file-invoice-dollar', 'Invoices', 0],
             ['new',       'quote.php',     'fa-file-circle-plus', 'New quote request', basketCount()],
         ],
         'Shop' => [

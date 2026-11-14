@@ -7,7 +7,7 @@ declare(strict_types=1);
  * the version reached. Works on MySQL 8 and MariaDB. No table or column is
  * named after a MySQL 8 reserved word.
  */
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 function runMigrations(PDO $db): void
 {
@@ -20,6 +20,7 @@ function runMigrations(PDO $db): void
     if ((int) $db->query("SELECT GET_LOCK('pallets_migrate', 10)")->fetchColumn() !== 1) return;
     try {
         if ($v < 1) { migrationV1($db); seedCatalogue($db); seedPosts($db); }
+        if ($v < 2) migrationV2($db);
         $db->prepare("REPLACE INTO app_settings (k, v) VALUES ('schema_version', ?)")->execute([(string) SCHEMA_VERSION]);
     } finally {
         $db->query("SELECT RELEASE_LOCK('pallets_migrate')");
@@ -218,6 +219,56 @@ function migrationV1(PDO $db): void
         status ENUM('sent','failed') NOT NULL, error VARCHAR(500) NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, INDEX (created_at), INDEX (status)
     ){$t}");
+}
+
+/** Invoices, editable email templates and the sales@ mailbox. */
+function migrationV2(PDO $db): void
+{
+    $t = ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
+    $db->exec("CREATE TABLE IF NOT EXISTS invoices (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        invoice_no VARCHAR(20) NULL UNIQUE,
+        quote_id INT UNSIGNED NULL,
+        user_id INT UNSIGNED NULL,
+        full_name VARCHAR(120) NOT NULL,
+        email VARCHAR(190) NOT NULL,
+        phone VARCHAR(40) NULL,
+        company_name VARCHAR(160) NULL,
+        vat_number VARCHAR(40) NULL,
+        billing_address VARCHAR(400) NULL,
+        issue_date DATE NOT NULL,
+        due_date DATE NULL,
+        status ENUM('unpaid','paid','cancelled') NOT NULL DEFAULT 'unpaid',
+        subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,
+        delivery_fee DECIMAL(10,2) NOT NULL DEFAULT 0,
+        discount DECIMAL(10,2) NOT NULL DEFAULT 0,
+        total DECIMAL(12,2) NOT NULL DEFAULT 0,
+        notes TEXT NULL,
+        sent_at DATETIME NULL,
+        paid_at DATETIME NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX (quote_id), INDEX (user_id), INDEX (status), INDEX (email),
+        FOREIGN KEY (quote_id) REFERENCES quotes(id) ON DELETE SET NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    ){$t}");
+    $db->exec("CREATE TABLE IF NOT EXISTS invoice_items (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        invoice_id INT UNSIGNED NOT NULL,
+        name VARCHAR(200) NOT NULL,
+        qty INT UNSIGNED NOT NULL DEFAULT 1,
+        unit_price DECIMAL(10,2) NOT NULL DEFAULT 0,
+        notes VARCHAR(500) NULL,
+        sort_order INT NOT NULL DEFAULT 0,
+        INDEX (invoice_id),
+        FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
+    ){$t}");
+    $db->exec("CREATE TABLE IF NOT EXISTS email_templates (
+        tkey VARCHAR(40) PRIMARY KEY,
+        subject VARCHAR(255) NOT NULL,
+        body TEXT NOT NULL,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ){$t}");
+    addColumn($db, 'sent_emails', 'mailbox', "VARCHAR(10) NULL");
 }
 
 /** Categories and the 37 products copied from the old WooCommerce site (database/seed/products.json). */

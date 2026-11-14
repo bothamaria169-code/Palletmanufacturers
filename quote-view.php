@@ -33,10 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         getDB()->prepare('UPDATE quotes SET status = ? WHERE id = ?')->execute([$new, $id]);
         $reason = postText('reason', 1000);
         if ($reason !== '') addQuoteMessage($id, $user ? (int) $user['id'] : null, false, ($new === 'accepted' ? 'Accepted: ' : 'Declined: ') . $reason);
-        sendMail(get_setting('notify_email', ADMIN_EMAIL), 'Quote ' . $q['ref'] . ' ' . $new . ' by ' . $q['full_name'], emailLayout(
+        sendMail(notifyEmail(), 'Quote ' . $q['ref'] . ' ' . $new . ' by ' . $q['full_name'], emailLayout(
             'Quote ' . e($q['ref']) . ' was ' . $new,
             emailRows(['Customer' => $q['full_name'], 'Company' => $q['company_name'] ?: '—', 'Total' => rand_($q['total'], true), 'Phone' => $q['phone'] ?: '—']),
-            'Open quote', APP_URL . '/admin/quote.php?id=' . $id), [], $q['email'], 'quote_' . $new);
+            'Open quote', APP_URL . '/admin/quote.php?id=' . $id), [], $q['email'], 'quote_' . $new, ['mailbox' => 'sales']);
         flash('success', $new === 'accepted' ? 'Thank you! Quote accepted — we\'ll send the invoice and confirm delivery.' : 'Quote declined. Thanks for letting us know.');
     }
     header('Location: ' . $self);
@@ -49,10 +49,19 @@ $pos   = array_search($q['status'], $order, true);
 $expired = $q['status'] === 'quoted' && $q['valid_until'] && strtotime($q['valid_until'] . ' 23:59:59') < time();
 $showPrices = in_array($q['status'], ['quoted', 'accepted', 'completed', 'declined'], true);
 
-$actions = '<button class="btn btn-ghost" onclick="window.print()"><i class="fa-solid fa-print"></i>Print / PDF</button>';
+$invoices = array_values(array_filter(invoicesForQuote($id), fn($iv) => $iv['status'] !== 'cancelled'));
+$actions = '<a class="btn btn-ghost" href="' . e(quoteDocLink($id, true)) . '&dl=1"><i class="fa-solid fa-file-pdf"></i>Quote PDF</a>';
 if ($user && !$viaKey && $q['items']) $actions .= '<a class="btn btn-ghost" href="' . APP_URL . '/quote.php?reorder=' . $id . '"><i class="fa-solid fa-rotate-right"></i>Re-order</a>';
 
-$body = function () use ($q, $steps, $pos, $expired, $showPrices, $id, $key, $viaKey, $user) { ?>
+$body = function () use ($q, $steps, $pos, $expired, $showPrices, $id, $key, $viaKey, $user, $invoices) { ?>
+  <?php foreach ($invoices as $iv): ?>
+    <div class="card" style="border-color:<?= $iv['status'] === 'paid' ? 'var(--mint)' : 'var(--brand)' ?>;margin-bottom:1.2rem">
+      <div class="card__body" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between">
+        <div><strong style="font-size:1.05rem">Invoice <?= e($iv['invoice_no']) ?> · <?= rand_($iv['total'], true) ?></strong> <?= invoiceStatusTag($iv['status']) ?><br><span class="muted"><?= $iv['status'] === 'paid' ? 'Thank you — paid.' : 'Please pay using ' . e($iv['invoice_no']) . ' as the reference. Banking details are on the invoice.' ?></span></div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap"><a class="btn btn-primary" href="<?= e(invoiceLink((int) $iv['id'])) ?>" target="_blank"><i class="fa-solid fa-file-invoice-dollar"></i>View invoice</a><a class="btn btn-ghost" href="<?= e(invoiceLink((int) $iv['id'], true)) ?>&dl=1"><i class="fa-solid fa-file-pdf"></i>PDF</a></div>
+      </div>
+    </div>
+  <?php endforeach; ?>
   <?php if (in_array($q['status'], ['declined', 'cancelled'], true)): ?>
     <div class="alert alert-error"><i class="fa-solid fa-circle-xmark"></i><span>This quote was <?= e(strtolower(QUOTE_STATUSES[$q['status']])) ?>.</span></div>
   <?php else: ?>

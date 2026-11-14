@@ -47,6 +47,8 @@ if ($appUrl === '') {
 define('APP_URL', rtrim($appUrl, '/'));
 
 define('ADMIN_EMAIL', strtolower((string) secret('admin_email', 'info@durbanspallets.co.za')));
+// Enquiries, quotes and invoices go out from (and the admin inbox reads) this mailbox.
+define('SALES_EMAIL', strtolower((string) secret('sales_email', 'sales@durbanspallets.co.za')));
 define('APP_SECRET', (string) secret('app_secret', 'change-me'));
 
 // ── Database ─────────────────────────────────────────────────────

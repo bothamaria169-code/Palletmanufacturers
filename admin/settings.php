@@ -4,25 +4,39 @@ declare(strict_types=1);
 require_once __DIR__ . '/_shell.php';
 require_once BASE_DIR . '/includes/ai.php';
 
-$tabs = ['business' => 'Business', 'quotes' => 'Quotes', 'email' => 'Email', 'ai' => 'AI (Groq)', 'tracking' => 'Google & Meta'];
+$tabs = ['business' => 'Business', 'quotes' => 'Quotes', 'email' => 'Email', 'invoices' => 'Invoices', 'ai' => 'AI (Groq)', 'tracking' => 'Google & Meta'];
 $tab = isset($tabs[$_GET['tab'] ?? '']) ? $_GET['tab'] : 'business';
 
 $fields = [
     'business' => ['biz_name', 'biz_trading', 'biz_phone', 'biz_whatsapp', 'biz_email', 'biz_address', 'biz_hours', 'biz_maps', 'biz_facebook'],
     'quotes'   => ['notify_email', 'prices_include_vat'],
-    'email'    => ['smtp_host', 'smtp_port', 'smtp_user', 'mail_from_name'],
+    'email'    => ['smtp_host', 'smtp_port', 'smtp_user', 'sales_smtp_user', 'imap_host', 'imap_port', 'mail_from_name'],
+    'invoices' => ['company_reg', 'company_vat', 'bank_name', 'bank_account_name', 'bank_account_no', 'bank_branch', 'bank_account_type', 'invoice_terms_days', 'invoice_footer'],
     'ai'       => ['ai_enabled', 'ai_autoreply', 'ai_monthly_limit', 'groq_model'],
     'tracking' => ['ga4_id', 'gsc_verification', 'meta_pixel_id'],
 ];
-$secrets = ['email' => ['smtp_pass'], 'ai' => ['groq_api_key']];
+$secrets = ['email' => ['smtp_pass', 'sales_smtp_pass'], 'ai' => ['groq_api_key']];
 $checkboxes = ['prices_include_vat', 'ai_enabled', 'ai_autoreply'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'save';
-    if ($action === 'test_email') {
+    if (in_array($action, ['test_email', 'test_sales'], true)) {
+        $box = $action === 'test_sales' ? 'sales' : 'info';
         $to = $ADMIN['email'];
-        $err = sendMail($to, 'Test email from ' . APP_NAME, emailLayout('It works!', '<p>Your email settings are correct. Quotes and receipts will be sent from this mailbox.</p>'), [], null, 'test');
-        flash($err === '' ? 'success' : 'error', $err === '' ? "Test email sent to {$to}. Check the inbox (and spam)." : 'Sending failed: ' . $err);
+        $from = mailboxConfig($box)['from'];
+        $err = sendMail($to, 'Test email from ' . $from, emailLayout('It works!', '<p>This came from <strong>' . e($from) . '</strong>. Your email settings are correct.</p>'), [], null, 'test', ['mailbox' => $box]);
+        flash($err === '' ? 'success' : 'error', $err === '' ? "Test email sent from {$from} to {$to}. Check the inbox (and spam)." : 'Sending failed: ' . $err);
+    } elseif ($action === 'test_inbox') {
+        require_once BASE_DIR . '/includes/mailreader.php';
+        try {
+            $mr = MailReader::open();
+            $n = $mr->select('INBOX');
+            $sent = $mr->sentFolder();
+            $mr->close();
+            flash('success', "Inbox connected: {$n} emails in " . SALES_EMAIL . " (sent copies go to {$sent}).");
+        } catch (Throwable $e) {
+            flash('error', 'Inbox: ' . $e->getMessage());
+        }
     } elseif ($action === 'test_ai') {
         $models = groqModels(true);
         if (!aiKey()) flash('error', 'Save a Groq API key first.');
@@ -70,16 +84,40 @@ adminOpen('settings', 'Settings', 'Every key and detail the site uses. Changes a
     <div class="field full"><label for="biz_hours">Working hours <span class="hint">one line per row</span></label><textarea id="biz_hours" name="biz_hours" style="min-height:70px"><?= e(biz('biz_hours')) ?></textarea></div>
   </div>
 <?php elseif ($tab === 'quotes'): ?>
-  <?= $input('notify_email', 'Send new quote requests to', 'one email address', ADMIN_EMAIL, 'email') ?>
+  <?= $input('notify_email', 'Send new quote requests, enquiries and customer messages to', 'one email address', SALES_EMAIL, 'email') ?>
   <label class="check"><input type="checkbox" name="prices_include_vat" value="1" <?= $val('prices_include_vat', '1') === '1' ? 'checked' : '' ?>> <span>Website prices include 15% VAT <span class="hint">(untick if your prices are excl. VAT)</span></span></label>
 <?php elseif ($tab === 'email'): ?>
-  <p class="hint" style="margin-bottom:1rem">🟧 cPanel → <strong>Email Accounts</strong> → <strong>Connect Devices</strong> shows these values. Leave the password blank to use the server's built-in mail (less reliable).</p>
+  <p class="hint" style="margin-bottom:1rem">🟧 cPanel → <strong>Email Accounts</strong> → <strong>Connect Devices</strong> shows these values. Use the full email address as the username.</p>
   <div class="form-grid">
-    <?= $input('smtp_host', 'SMTP server', 'e.g. mail.durbanspallets.co.za', SMTP_HOST) ?>
-    <?= $input('smtp_port', 'Port', '465 (SSL) or 587', (string) SMTP_PORT) ?>
-    <?= $input('smtp_user', 'Mailbox (username)', 'e.g. info@durbanspallets.co.za', SMTP_USER) ?>
-    <?= $secretInput('smtp_pass', 'Mailbox password', 'blank keeps the saved one') ?>
+    <?= $input('smtp_host', 'Mail server', 'e.g. mail.durbanspallets.co.za', SMTP_HOST) ?>
+    <?= $input('smtp_port', 'SMTP port', '465 (SSL) or 587', (string) SMTP_PORT) ?>
     <?= $input('mail_from_name', 'From name', '', APP_NAME) ?>
+  </div>
+  <h3 style="font-size:1rem;margin:1rem 0 .3rem">Info mailbox <span class="hint">account emails: welcome, password links</span></h3>
+  <div class="form-grid">
+    <?= $input('smtp_user', 'Email address', '', SMTP_USER ?: ADMIN_EMAIL) ?>
+    <?= $secretInput('smtp_pass', 'Password', 'blank keeps the saved one') ?>
+  </div>
+  <h3 style="font-size:1rem;margin:1rem 0 .3rem">Sales mailbox <span class="hint">enquiries, quotes, invoices + the admin Inbox</span></h3>
+  <div class="form-grid">
+    <?= $input('sales_smtp_user', 'Email address', '', SALES_EMAIL) ?>
+    <?= $secretInput('sales_smtp_pass', 'Password', 'blank keeps the saved one') ?>
+    <?= $input('imap_host', 'Incoming (IMAP) server', 'blank = same mail server', '') ?>
+    <?= $input('imap_port', 'IMAP port', '993', '993') ?>
+  </div>
+  <p class="hint">No sales password yet? Quotes go out from the info mailbox instead. Without any password the server's own mail is used (often lands in spam).</p>
+<?php elseif ($tab === 'invoices'): ?>
+  <p class="hint" style="margin-bottom:1rem">Printed on every invoice and quote PDF.</p>
+  <div class="form-grid">
+    <?= $input('company_reg', 'Company registration no.', 'optional') ?>
+    <?= $input('company_vat', 'Your VAT no.', 'optional') ?>
+    <?= $input('bank_name', 'Bank', 'e.g. FNB') ?>
+    <?= $input('bank_account_name', 'Account name', '', APP_NAME) ?>
+    <?= $input('bank_account_no', 'Account number') ?>
+    <?= $input('bank_branch', 'Branch code') ?>
+    <?= $input('bank_account_type', 'Account type', 'e.g. Business cheque') ?>
+    <?= $input('invoice_terms_days', 'Payment due after (days)', '0 = on receipt', '7', 'number') ?>
+    <div class="field full"><label for="invoice_footer">Footer text</label><input id="invoice_footer" name="invoice_footer" value="<?= e($val('invoice_footer', 'Thank you for your business. Goods remain the property of ' . APP_NAME . ' until paid in full.')) ?>"></div>
   </div>
 <?php elseif ($tab === 'ai'): ?>
   <div class="status-line <?= aiEnabled() ? 'ok' : 'off' ?>"><span class="dot"></span><?= aiEnabled() ? 'AI is on · model ' . e(groqModel()) . ' · ' . aiUsedThisMonth() . ' calls this month' : 'AI is off — add a Groq key' ?></div>
@@ -101,7 +139,7 @@ adminOpen('settings', 'Settings', 'Every key and detail the site uses. Changes a
 <?php endif; ?>
   <div class="form-foot" style="margin-top:1rem">
     <button class="btn btn-primary" name="action" value="save">Save</button>
-    <?php if ($tab === 'email'): ?><button class="btn btn-ghost" name="action" value="test_email"><i class="fa-solid fa-paper-plane"></i>Send test email</button><?php endif; ?>
+    <?php if ($tab === 'email'): ?><button class="btn btn-ghost" name="action" value="test_email"><i class="fa-solid fa-paper-plane"></i>Test info@</button><button class="btn btn-ghost" name="action" value="test_sales"><i class="fa-solid fa-paper-plane"></i>Test sales@</button><button class="btn btn-ghost" name="action" value="test_inbox"><i class="fa-solid fa-inbox"></i>Test inbox</button><?php endif; ?>
     <?php if ($tab === 'ai'): ?><button class="btn btn-ghost" name="action" value="test_ai"><i class="fa-solid fa-vial"></i>Test AI</button><?php endif; ?>
   </div>
 </form>

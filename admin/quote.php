@@ -53,6 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('success', 'Quote ' . $q['ref'] . ' deleted.');
         redirect('admin/quotes.php');
     }
+    if ($action === 'invoice') {
+        try {
+            $iid = createInvoiceFromQuote($id);
+            audit('invoice_create', invoiceNo($iid), $q['ref']);
+            flash('success', 'Invoice ' . invoiceNo($iid) . ' created. Check it, then press "Email invoice".');
+            redirect('admin/invoice.php?id=' . $iid);
+        } catch (Throwable $e) {
+            flash('error', 'Could not create the invoice: ' . $e->getMessage());
+            redirect('admin/quote.php?id=' . $id);
+        }
+    }
     if ($action === 'message') {
         $body = postText('body', 3000);
         if ($body !== '') {
@@ -106,6 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('admin/quote.php?id=' . $id);
 }
 
+$invoices = invoicesForQuote($id);
 $products = $db->query('SELECT id, name, price FROM products WHERE is_active = 1 ORDER BY name')->fetchAll();
 $customer = $q['user_id'] ? $db->query('SELECT * FROM users WHERE id = ' . (int) $q['user_id'])->fetch() : null;
 $history = $db->prepare('SELECT id, ref, status, total, created_at FROM quotes WHERE email = ? AND id <> ? ORDER BY created_at DESC LIMIT 5');
@@ -116,6 +128,7 @@ if (str_starts_with($tel, '0')) $tel = '27' . substr($tel, 1);
 
 adminOpen('quotes', 'Quote ' . $q['ref'], quoteStatusTag($q['status']) . ' &nbsp;·&nbsp; ' . e($q['full_name']) . ' · requested ' . e(timeAgo($q['created_at'])) . ' via ' . e($q['source']),
     '<a class="btn btn-ghost" href="' . e(quoteLink($id)) . '" target="_blank"><i class="fa-solid fa-eye"></i>Customer view</a>'
+    . '<a class="btn btn-ghost" href="' . e(quoteDocLink($id, true)) . '&dl=1"><i class="fa-solid fa-file-pdf"></i>PDF</a>'
     . ($tel ? '<a class="btn btn-wa" href="https://wa.me/' . $tel . '?text=' . rawurlencode('Hi ' . explode(' ', $q['full_name'])[0] . ', your pallet quote ' . $q['ref'] . ' is ready: ' . quoteLink($id)) . '" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i>WhatsApp</a>' : ''));
 ?>
 <form method="post" id="quoteForm">
@@ -179,7 +192,20 @@ adminOpen('quotes', 'Quote ' . $q['ref'], quoteStatusTag($q['status']) . ' &nbsp
           <button class="btn btn-primary" name="action" value="send" data-busy><i class="fa-solid fa-paper-plane"></i>Save &amp; email quote</button>
           <button class="btn btn-ghost" name="action" value="save"><i class="fa-solid fa-floppy-disk"></i>Save</button>
         </div>
-        <p class="hint" style="margin-top:.8rem">"Save &amp; email" sends the priced quote to <strong><?= e($q['email']) ?></strong> with a link to accept it online, and sets the status to "Quote sent".<?= $q['quoted_at'] ? ' Last sent ' . e(timeAgo($q['quoted_at'])) . '.' : '' ?></p>
+        <p class="hint" style="margin-top:.8rem">"Save &amp; email" sends the priced quote from <?= e(SALES_EMAIL) ?> to <strong><?= e($q['email']) ?></strong> with the PDF attached and a link to accept it online, and sets the status to "Quote sent".<?= $q['quoted_at'] ? ' Last sent ' . e(timeAgo($q['quoted_at'])) . '.' : '' ?></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head"><h2>Invoice</h2></div>
+      <div class="card__body">
+        <?php foreach ($invoices as $iv): ?>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.5rem"><a href="invoice.php?id=<?= (int) $iv['id'] ?>"><strong><?= e($iv['invoice_no']) ?></strong></a> <?= invoiceStatusTag($iv['status']) ?> <span><?= rand_($iv['total'], true) ?></span></div>
+        <?php endforeach; ?>
+        <?php if (!array_filter($invoices, fn($iv) => $iv['status'] !== 'cancelled')): ?>
+          <button class="btn btn-dark btn-block" form="invForm"<?= $q['items'] ? '' : ' disabled' ?>><i class="fa-solid fa-file-invoice-dollar"></i>Create invoice from this quote</button>
+          <p class="hint" style="margin-top:.5rem">Uses the saved prices, delivery and discount. Save first if you changed anything.</p>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -215,5 +241,6 @@ adminOpen('quotes', 'Quote ' . $q['ref'], quoteStatusTag($q['status']) . ' &nbsp
 </div>
 </form>
 <form method="post" id="msgForm"><?= csrfField() ?><input type="hidden" name="action" value="message"></form>
+<form method="post" id="invForm"><?= csrfField() ?><input type="hidden" name="action" value="invoice"></form>
 <form method="post" id="delForm" data-confirm="Delete quote <?= e($q['ref']) ?> permanently?"><?= csrfField() ?><input type="hidden" name="action" value="delete"></form>
 <?php adminClose();

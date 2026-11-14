@@ -21,9 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         getDB()->prepare('INSERT INTO enquiries (full_name, email, phone, address, message, ip) VALUES (?,?,?,?,?,?)')
             ->execute([$d['full_name'], strtolower($d['email']), $d['phone'] ?: null, $d['address'] ?: null, $d['message'], clientIp()]);
         $id = (int) getDB()->lastInsertId();
-        sendMail(get_setting('notify_email', ADMIN_EMAIL), 'Website enquiry from ' . $d['full_name'], emailLayout('New website enquiry',
+        sendMail(notifyEmail(), 'Website enquiry from ' . $d['full_name'], emailLayout('New website enquiry',
             emailRows(['Name' => $d['full_name'], 'Email' => $d['email'], 'Phone / WhatsApp' => $d['phone'] ?: '—', 'Delivery address' => $d['address'] ?: '—'])
-            . '<p style="margin-top:16px;white-space:pre-line">' . e($d['message']) . '</p>', 'Open enquiries', APP_URL . '/admin/enquiries.php?id=' . $id), [], $d['email'], 'enquiry_admin');
+            . '<p style="margin-top:16px;white-space:pre-line">' . e($d['message']) . '</p>', 'Open enquiries', APP_URL . '/admin/enquiries.php?id=' . $id), [], $d['email'], 'enquiry_admin', ['mailbox' => 'sales']);
         require_once __DIR__ . '/includes/ai.php';
         sendEnquiryReply($d);
         $sent = true;

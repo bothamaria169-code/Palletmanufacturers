@@ -6,4 +6,6 @@ Disallow: /account.php
 Disallow: /quotes.php
 Disallow: /quote-view.php
 
+
 Sitemap: https://durbanspallets.co.za/sitemap.php
+Disallow: /document.php

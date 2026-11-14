@@ -33,6 +33,11 @@ return [
     'smtp_user' => 'info@durbanspallets.co.za',
     'smtp_pass' => '',
 
+    // Sales mailbox: enquiries, quotes, invoices and the admin Inbox (IMAP). Also editable in Admin → Settings → Email.
+    'sales_email'     => 'sales@durbanspallets.co.za',
+    'sales_smtp_user' => 'sales@durbanspallets.co.za',
+    'sales_smtp_pass' => '',
+
     // Groq AI (console.groq.com → API Keys). Can also be set in Admin → Settings → AI.
     'groq_api_key' => '',
 

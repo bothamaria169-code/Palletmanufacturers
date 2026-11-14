@@ -135,7 +135,7 @@ function registerUser(array $d): int|false
     $user = $s->fetch();
     beginUserSession($user);
 
-    sendMail(get_setting('notify_email', ADMIN_EMAIL), 'New customer account: ' . $email, emailLayout('New customer account', emailRows([
+    sendMail(notifyEmail(), 'New customer account: ' . $email, emailLayout('New customer account', emailRows([
         'Name' => $user['full_name'] ?: '—', 'Company' => $user['company_name'] ?: '—', 'Email' => $email, 'Phone' => $user['phone'] ?: '—', 'Signed up' => date('d M Y, H:i'),
     ]), 'Open in admin', APP_URL . '/admin/users.php?q=' . rawurlencode($email)), [], $email, 'signup_admin');
     sendMail($email, 'Welcome to ' . APP_NAME, emailLayout('Welcome, ' . e(explode(' ', (string) ($user['full_name'] ?: 'there'))[0]) . '!',

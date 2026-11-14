@@ -33,10 +33,11 @@ Follow the sections in order. Each step starts with where you do it:
 
 ✅ **Test:** the database shows the user under **Privileged Users**.
 
-## 3. Email mailbox (5 min)
+## 3. Email mailboxes (10 min)
 
 1. 🟧 cPanel → **Email Accounts** → **Create** → `info@durbanspallets.co.za` → set a password → **Create**.
-2. Click **Connect Devices** next to it and note the **Outgoing Server** and **SMTP Port** (465).
+2. Again → **Create** → `sales@durbanspallets.co.za` → set a password → **Create**.
+3. Click **Connect Devices** next to one of them and note the **Outgoing Server**, **SMTP Port** (465) and **IMAP Port** (993).
 
 ✅ **Test:** cPanel → **Check Email** → the mailbox opens in Webmail.
 
@@ -69,9 +70,11 @@ Follow the sections in order. Each step starts with where you do it:
 1. Open https://durbanspallets.co.za/login.php → `info@durbanspallets.co.za` + your `admin_seed_password` → **Sign in**.
 2. 🟩 **Settings → Business** — check name, phone, WhatsApp, email, address and **working hours** → **Save**.
 3. 🟩 **Settings → Quotes** — set where new quote requests go, and whether website prices include VAT → **Save**.
-4. 🟩 **Settings → Email** — fill in the mailbox → **Save** → **Send test email**.
+4. 🟩 **Settings → Email** — mail server, then the **Info mailbox** and **Sales mailbox** passwords → **Save** → **Test info@** → **Test sales@** → **Test inbox**.
+5. 🟩 **Settings → Invoices** — bank name, account name, account number, branch code, payment days → **Save**.
+6. 🟩 **Email templates** — read each template and change the wording if you like → **Save template**.
 
-✅ **Test:** the test email arrives in your inbox (check spam the first time).
+✅ **Test:** both test emails arrive (check spam the first time), **Test inbox** says "Inbox connected", and 🟩 **Inbox** lists the sales@ emails.
 
 ## 7. Try a full quote (5 min)
 
@@ -79,7 +82,9 @@ Follow the sections in order. Each step starts with where you do it:
 2. 🟩 **Quotes** → open it → change a price, add **Delivery** → **Save & email quote**.
 3. Open the email → **View & accept quote** → **Accept quote**.
 
-✅ **Test:** the quote shows **Accepted** in 🟩 **Quotes**, and you received an "accepted" email.
+4. 🟩 Open the quote → **Create invoice from this quote** → **Email invoice (PDF)**.
+
+✅ **Test:** the quote shows **Accepted**, you received an "accepted" email, and the customer email has the invoice PDF attached with your bank details.
 
 ## 8. Groq AI (5 min, free)
 

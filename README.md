@@ -2,7 +2,7 @@
 
 Pallet shop where customers build a **quote request** (no card checkout), get a priced quote by email, and **accept it online** in their own dashboard. Staff price and send quotes from the **admin panel**.
 
-**Stack:** PHP 8.1+ · MySQL/MariaDB (PDO) · PHPMailer · Groq AI · plain CSS/JS (SWIFTDNA) · cPanel Git deploy
+**Stack:** PHP 8.1+ · MySQL/MariaDB (PDO) · PHPMailer · dompdf (PDFs) · built-in IMAP reader · Groq AI · plain CSS/JS (SWIFTDNA) · cPanel Git deploy
 
 All 37 products, categories, photos, About text, return policy and the 4 blog articles were copied from the old palletmanufacturers.co.za WooCommerce site.
 
@@ -16,7 +16,11 @@ All 37 products, categories, photos, About text, return policy and the 4 blog ar
 | Customer dashboard | `dashboard.php`, `quotes.php`, `account.php` |
 | Sign in / sign up / reset | `login.php`, `register.php`, `forgot-password.php`, `reset-password.php` |
 | About, Contact, Returns, Blog, Privacy, Terms | `about.php`, `contact.php`, `returns.php`, `blog.php` + `post.php`, `privacy.php`, `terms.php` |
-| Admin panel | `admin/` — Dashboard, Quotes, Enquiries, Customers, Products, Categories, Blog, Emails, Settings, Audit log |
+| Admin panel | `admin/` — Dashboard, Quotes, Invoices, Inbox (sales@), Enquiries, Customers, Products, Categories, Blog, Email templates, Sent log, Settings, Audit log |
+| Quote / invoice PDFs + print view | `document.php` (signed links) · layout in `includes/documents.php` |
+| Invoices | `includes/invoices.php`, `admin/invoices.php`, `admin/invoice.php`, customer `invoices.php` |
+| Email templates | `includes/templates.php` (defaults) · edited in **Admin → Email templates** |
+| Inbox (read + reply to sales@) | `admin/inbox.php` · IMAP client `includes/mailreader.php` (no PHP imap extension needed) |
 | Database tables | `database/migrate.php` (creates everything on the first page load) |
 | Seed data from the old site | `database/seed/products.json`, `database/seed/content.json`, `assets/img/products/` |
 | Business details, VAT, email, AI, Google/Meta | **Admin → Settings** (falls back to `config/secrets.php`) |
@@ -29,9 +33,19 @@ All 37 products, categories, photos, About text, return policy and the 4 blog ar
 2. You get an email; the customer gets a copy with a tracking link (works without an account).
 3. 🟩 **Admin → Quotes → Price it**: change unit prices, add delivery/discount, a note → **Save & email quote**.
 4. Customer opens the link or their dashboard → **Accept quote** (or Decline). You get an email.
-5. Mark it **Delivered** when done. Customers can **Re-order** any old quote in one click.
+5. 🟩 On the quote → **Create invoice from this quote** → **Email invoice (PDF)**. When the money is in → **Mark as paid**.
+6. Mark the quote **Delivered** when done. Customers can **Re-order** any old quote in one click.
 
 Guest quotes move into the customer's account automatically when they sign up or sign in with the same email.
+
+## The two mailboxes
+
+| Mailbox | Sends | Set in |
+|---|---|---|
+| `info@durbanspallets.co.za` | welcome emails, password links; admin login | 🟩 Settings → Email → Info mailbox |
+| `sales@durbanspallets.co.za` | quote emails (PDF), invoices (PDF), enquiry replies, messages; **Admin → Inbox** reads and answers it | 🟩 Settings → Email → Sales mailbox |
+
+New quote requests, enquiries and customer messages are announced to sales@ (🟩 Settings → Quotes).
 
 ## Run it locally (XAMPP)
 

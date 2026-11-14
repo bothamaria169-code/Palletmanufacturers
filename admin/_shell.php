@@ -18,13 +18,16 @@ function adminOpen(string $active, string $title, string $sub = '', string $acti
     $newQuotes = (int) $db->query("SELECT COUNT(*) FROM quotes WHERE status IN ('new','reviewing')")->fetchColumn();
     $unread    = (int) $db->query('SELECT COUNT(*) FROM enquiries WHERE is_read = 0')->fetchColumn();
     $newUsers  = (int) $db->query('SELECT COUNT(*) FROM users WHERE created_at > (NOW() - INTERVAL 1 DAY)')->fetchColumn();
+    $unpaid    = (int) $db->query("SELECT COUNT(*) FROM invoices WHERE status = 'unpaid'")->fetchColumn();
     $failed    = (int) $db->query("SELECT COUNT(*) FROM sent_emails WHERE status = 'failed' AND created_at > (NOW() - INTERVAL 1 DAY)")->fetchColumn();
 
     $nav = [
         'Sales' => [
             ['dashboard', 'index.php',     'fa-gauge-high',    'Dashboard', 0],
             ['quotes',    'quotes.php',    'fa-file-invoice',  'Quotes', $newQuotes],
-            ['enquiries', 'enquiries.php', 'fa-inbox',         'Enquiries', $unread],
+            ['invoices',  'invoices.php',  'fa-file-invoice-dollar', 'Invoices', $unpaid],
+            ['inbox',     'inbox.php',     'fa-envelope',      'Inbox (sales@)', 0],
+            ['enquiries', 'enquiries.php', 'fa-comments',      'Enquiries', $unread],
             ['users',     'users.php',     'fa-users',         'Customers', $newUsers],
         ],
         'Catalogue' => [
@@ -33,7 +36,8 @@ function adminOpen(string $active, string $title, string $sub = '', string $acti
             ['posts',     'posts.php',     'fa-newspaper',     'Blog', 0],
         ],
         'Setup' => [
-            ['emails',    'emails.php',    'fa-envelope-open-text', 'Emails', $failed],
+            ['templates', 'templates.php', 'fa-pen-to-square', 'Email templates', 0],
+            ['emails',    'emails.php',    'fa-envelope-open-text', 'Sent log', $failed],
             ['settings',  'settings.php',  'fa-sliders',       'Settings', 0],
             ['audit',     'audit.php',     'fa-clock-rotate-left', 'Audit log', 0],
         ],

@@ -7,53 +7,81 @@ require_once BASE_DIR . '/vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
- * Sends one email. SMTP comes from Admin → Settings → Email, falling back to
- * secrets.php; with no SMTP password it uses the server's own mail().
- * Every send is logged in sent_emails (Admin → Emails).
+ * The two mailboxes: "info" (accounts, password links) and "sales" (enquiries,
+ * quotes, invoices and inbox replies). Both are set in Admin → Settings → Email,
+ * falling back to secrets.php. With no sales password the info mailbox sends.
+ *
+ * @return array{host: string, port: int, user: string, pass: string, from: string}
+ */
+function mailboxConfig(string $mailbox = 'info'): array
+{
+    $host = get_setting('smtp_host', SMTP_HOST);
+    $port = (int) get_setting('smtp_port', (string) SMTP_PORT);
+    if ($mailbox === 'sales') {
+        $user = get_setting('sales_smtp_user', (string) secret('sales_smtp_user', SALES_EMAIL));
+        $pass = get_setting('sales_smtp_pass', (string) secret('sales_smtp_pass', ''));
+        if ($pass !== '') return ['host' => $host, 'port' => $port, 'user' => $user, 'pass' => $pass, 'from' => $user];
+    }
+    $user = get_setting('smtp_user', SMTP_USER);
+    $pass = get_setting('smtp_pass', SMTP_PASS);
+    return ['host' => $host, 'port' => $port, 'user' => $user, 'pass' => $pass, 'from' => $user !== '' ? $user : biz('biz_email')];
+}
+
+/**
+ * Sends one email and logs it in sent_emails (Admin → Emails).
+ *
+ * $opt: mailbox ('info'|'sales'), in_reply_to (Message-ID), cc,
+ *       files ([[bytes, filename], …] attached from memory, e.g. PDFs).
+ * The raw message of the last successful send is kept in $GLOBALS['PM_LAST_MIME']
+ * so the inbox can file a copy in Sent.
  *
  * @param string|string[] $to
  * @return string '' on success, otherwise the reason it failed
  */
-function sendMail(string|array $to, string $subject, string $html, array $attachments = [], ?string $replyTo = null, string $kind = ''): string
+function sendMail(string|array $to, string $subject, string $html, array $attachments = [], ?string $replyTo = null, string $kind = '', array $opt = []): string
 {
-    $host = get_setting('smtp_host', SMTP_HOST);
-    $port = (int) get_setting('smtp_port', (string) SMTP_PORT);
-    $user = get_setting('smtp_user', SMTP_USER);
-    $pass = get_setting('smtp_pass', SMTP_PASS);
-    $from = $user !== '' ? $user : biz('biz_email');
+    $box = $opt['mailbox'] ?? 'info';
+    $c = mailboxConfig($box);
     $error = '';
-
+    $GLOBALS['PM_LAST_MIME'] = '';
     try {
         $mail = new PHPMailer(true);
         $mail->CharSet = 'UTF-8';
-        if ($host !== '' && $pass !== '') {
+        if ($c['host'] !== '' && $c['pass'] !== '') {
             $mail->isSMTP();
-            $mail->Host       = $host;
-            $mail->Port       = $port;
+            $mail->Host       = $c['host'];
+            $mail->Port       = $c['port'];
             $mail->SMTPAuth   = true;
-            $mail->Username   = $user;
-            $mail->Password   = $pass;
-            $mail->SMTPSecure = $port === 465 ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Username   = $c['user'];
+            $mail->Password   = $c['pass'];
+            $mail->SMTPSecure = $c['port'] === 465 ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Timeout    = 20;
         } else {
             $mail->isMail();
         }
-        $mail->setFrom($from, get_setting('mail_from_name', APP_NAME));
+        $mail->setFrom($c['from'], get_setting('mail_from_name', APP_NAME));
         foreach ((array) $to as $addr) $mail->addAddress($addr);
+        foreach ((array) ($opt['cc'] ?? []) as $addr) $mail->addCC($addr);
         if ($replyTo) $mail->addReplyTo($replyTo);
+        if (!empty($opt['in_reply_to'])) {
+            $mail->addCustomHeader('In-Reply-To', $opt['in_reply_to']);
+            $mail->addCustomHeader('References', $opt['in_reply_to']);
+        }
         $mail->Subject = $subject;
         $mail->isHTML(true);
         $mail->Body    = $html;
         $mail->AltBody = trim(html_entity_decode(strip_tags(str_replace(['<br>', '</p>', '</tr>'], "\n", $html))));
         foreach ($attachments as $file) if (is_file($file)) $mail->addAttachment($file);
+        foreach ($opt['files'] ?? [] as [$bytes, $name]) $mail->addStringAttachment($bytes, $name);
         $mail->send();
+        $GLOBALS['PM_LAST_MIME'] = $mail->getSentMIMEMessage();
     } catch (\Throwable $e) {
         $error = $e->getMessage() ?: 'Unknown mail error';
         error_log('Pallets mail to ' . implode(',', (array) $to) . ' failed: ' . $error);
     }
     try {
-        getDB()->prepare('INSERT INTO sent_emails (to_email, subject, kind, status, error) VALUES (?, ?, ?, ?, ?)')
-            ->execute([mb_substr(implode(', ', (array) $to), 0, 255), mb_substr($subject, 0, 255), $kind ?: null, $error === '' ? 'sent' : 'failed', $error === '' ? null : mb_substr($error, 0, 500)]);
+        getDB()->prepare('INSERT INTO sent_emails (to_email, subject, kind, status, error, mailbox) VALUES (?, ?, ?, ?, ?, ?)')
+            ->execute([mb_substr(implode(', ', (array) $to), 0, 255), mb_substr($subject, 0, 255), $kind ?: null, $error === '' ? 'sent' : 'failed', $error === '' ? null : mb_substr($error, 0, 500), $box]);
     } catch (\Throwable) {
     }
     return $error;

@@ -191,8 +191,8 @@ SYS;
  */
 function sendEnquiryReply(array $d): void
 {
-    $first = e(explode(' ', trim($d['full_name']))[0] ?: 'there');
-    $body = '<p>Thank you for contacting ' . e(APP_NAME) . '. We\'ve received your message and one of our team will get back to you shortly — usually within one working day.</p>';
+    $first = explode(' ', trim($d['full_name']))[0] ?: 'there';
+    [$subject, $body] = renderTemplate('enquiry_reply', ['name' => $first]);
     if (aiEnabled() && aiUnderLimit() && get_setting('ai_autoreply', '1') === '1') {
         $list = [];
         foreach (getDB()->query('SELECT name, price FROM products WHERE is_active = 1 ORDER BY sort_order LIMIT 60') as $p) {
@@ -209,8 +209,7 @@ function sendEnquiryReply(array $d): void
         $ai = trim((string) ($r['data']['body'] ?? ''));
         $ok = $r['ok'] && mb_strlen($ai) > 40;
         logAi(null, 'autoreply', $ok);
-        if ($ok) $body = implode('', array_map(fn($para) => '<p>' . nl2br(e(trim($para))) . '</p>', preg_split('/\n\s*\n/', $ai)));
+        if ($ok) $body = '<p>Hi ' . e($first) . ',</p>' . textToHtml(e($ai)) . signatureHtml();
     }
-    $sig = '<p style="margin-top:22px">Kind regards,<br><strong>The ' . e(APP_NAME) . ' sales team</strong><br>' . e(biz('biz_phone')) . ' · ' . e(biz('biz_email')) . '</p>';
-    sendMail($d['email'], 'Thanks for contacting ' . APP_NAME, emailLayout('Hi ' . $first . ',', $body . $sig, 'Request a quote', APP_URL . '/quote.php'), [], biz('biz_email'), 'enquiry_reply');
+    sendMail($d['email'], $subject, emailLayout('', $body, templateButton('enquiry_reply'), APP_URL . '/quote.php'), [], SALES_EMAIL, 'enquiry_reply', ['mailbox' => 'sales']);
 }
