@@ -1,0 +1,11 @@
+# cPanel → Git™ Version Control → Manage → Pull or Deploy → "Deploy HEAD Commit" runs these steps.
+# Live site: durbanspallets.co.za → $HOME/public_html/ ($HOME = /home/durbanspallets, so the username can't be wrong).
+# config/secrets.php and uploads/products/ are never touched (they are not in the repository).
+deployment:
+  tasks:
+    - export DEPLOYPATH=$HOME/public_html/
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp -R admin ajax assets config database includes vendor $DEPLOYPATH
+    - /bin/cp *.php .htaccess robots.txt $DEPLOYPATH
+    - /bin/mkdir -p ${DEPLOYPATH}uploads/products
+    - /bin/cp uploads/.htaccess ${DEPLOYPATH}uploads/.htaccess

@@ -5,11 +5,12 @@ DirectoryIndex index.php
   RewriteEngine On
   # Force https + no www on the live domain (skipped on localhost)
   RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
-  RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
-  RewriteCond %{HTTPS} !=on
-  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
-  RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)
-  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+  RewriteRule ^ http://%1%{REQUEST_URI} [R=301,L]
+  # Turn on once AutoSSL has issued the certificate (remove the # on the 4 lines below):
+  # RewriteCond %{HTTPS} !=on
+  # RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  # RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)
+  # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
   # Old WordPress shop links → new pages
   RewriteRule ^shop/?$ shop.php [R=301,L]
