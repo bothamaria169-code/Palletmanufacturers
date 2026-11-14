@@ -16,3 +16,6 @@ composer.phar
 error_log
 .DS_Store
 Thumbs.db
+
+# Local-only: server secrets + client logins (never in GitHub)
+_private/

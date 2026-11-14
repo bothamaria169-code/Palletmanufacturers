@@ -1,9 +1,10 @@
 # cPanel → Git™ Version Control → Manage → Pull or Deploy → "Deploy HEAD Commit" runs these steps.
-# Own domain → the live folder is public_html. $HOME means the cPanel username can never be wrong.
+# TEMP test site: durbanspallets.swiftfusion.co.za (document root /home/swiftfusionco/durbanspallets.swiftfusion.co.za).
+# When durbanspallets.co.za is live, change the DEPLOYPATH line to:  export DEPLOYPATH=$HOME/public_html/
 # config/secrets.php and uploads/products/ are never touched (they are not in the repository).
 deployment:
   tasks:
-    - export DEPLOYPATH=$HOME/public_html/
+    - export DEPLOYPATH=$HOME/durbanspallets.swiftfusion.co.za/
     - /bin/mkdir -p $DEPLOYPATH
     - /bin/cp -R admin ajax assets config database includes vendor $DEPLOYPATH
     - /bin/cp *.php .htaccess robots.txt $DEPLOYPATH
