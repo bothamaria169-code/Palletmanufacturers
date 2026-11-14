@@ -19,3 +19,4 @@ Thumbs.db
 
 # Local-only: server secrets + client logins (never in GitHub)
 _private/
+shots/
