@@ -119,7 +119,7 @@ $html = '<!doctype html><html><head><meta charset="utf-8">' . $css . '</head><bo
 
 <div class="page">
   <h2>1. How the website works</h2>
-  <p>There are two sides: the <b>website</b> your customers use, and your <b>admin panel</b> at <b>' . SITE . '/admin</b>. Everything a customer does lands in the admin panel and in the <b>sales@durbanspallets.co.za</b> mailbox.</p>
+  <p>There are two sides: the <b>website</b> your customers use, and your <b>admin panel</b> at <b>' . SITE . '/admin</b>. Everything a customer does lands in the admin panel and in the <b>sales@durbanspallets.co.za</b> mailbox. <b>All emails go out from sales@ and replies come back to sales@</b>. info@ is only shown on the website.</p>
   <h3>The customer\'s journey</h3>
   ' . $customerJourney1 . '<div style="text-align:center;color:#a8a29e;font-size:11px">&#9660;</div>' . $customerJourney2 . '
   <h3>Your journey (admin)</h3>
@@ -222,7 +222,7 @@ $html = '<!doctype html><html><head><meta charset="utf-8">' . $css . '</head><bo
    <tr><td>You email the invoice</td><td>Invoice with banking details</td><td>Invoice PDF</td></tr>
    <tr><td>You write a message on a quote</td><td>Message about the quote</td><td>—</td></tr>
    <tr><td>They use the Contact page</td><td>Thank-you (or a personal AI reply, if AI is on)</td><td>—</td></tr>
-   <tr><td>They make an account / reset a password</td><td>Welcome / password link (from info@)</td><td>—</td></tr></table>
+   <tr><td>They make an account / reset a password</td><td>Welcome / password link</td><td>—</td></tr></table>
 </div>
 
 <div class="page">
@@ -244,7 +244,7 @@ $html = '<!doctype html><html><head><meta charset="utf-8">' . $css . '</head><bo
   <table class="grid" style="margin-top:8px"><tr><th style="width:24%">Settings tab</th><th>What it\'s for</th></tr>
    <tr><td>Business</td><td>Name, phone, WhatsApp, email, address, hours — shown everywhere on the site.</td></tr>
    <tr><td>Quotes</td><td>Where new requests are emailed, and whether prices include VAT.</td></tr>
-   <tr><td>Email</td><td>The info@ and sales@ mailbox passwords. Test with <b>Test info@</b>, <b>Test sales@</b> and <b>Test inbox</b>.</td></tr>
+   <tr><td>Email</td><td>The sales@ mailbox password. Every email goes out from sales@ and replies come back there. Test with <b>Send test email</b> and <b>Test inbox</b>.</td></tr>
    <tr><td>Invoices</td><td>Bank details, VAT and registration numbers, payment days.</td></tr>
    <tr><td>AI (Groq)</td><td>Free AI for product descriptions and contact replies.</td></tr>
    <tr><td>Google &amp; Meta</td><td>Google Analytics, Search Console and Meta Pixel codes.</td></tr></table>

@@ -98,7 +98,7 @@ function addQuoteMessage(int $quoteId, ?int $userId, bool $fromAdmin, string $bo
 /** Where new quote requests, enquiries and customer messages are announced. */
 function notifyEmail(): string
 {
-    return get_setting('notify_email', SALES_EMAIL);
+    return get_setting('notify_email', SALES_EMAIL) ?: SALES_EMAIL;
 }
 
 function quoteItemsTableHtml(array $q, bool $forEmail = true): string

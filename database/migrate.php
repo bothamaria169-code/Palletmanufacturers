@@ -7,7 +7,7 @@ declare(strict_types=1);
  * the version reached. Works on MySQL 8 and MariaDB. No table or column is
  * named after a MySQL 8 reserved word.
  */
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 function runMigrations(PDO $db): void
 {
@@ -21,6 +21,7 @@ function runMigrations(PDO $db): void
     try {
         if ($v < 1) { migrationV1($db); seedCatalogue($db); seedPosts($db); }
         if ($v < 2) migrationV2($db);
+        if ($v < 3) migrationV3($db);
         $db->prepare("REPLACE INTO app_settings (k, v) VALUES ('schema_version', ?)")->execute([(string) SCHEMA_VERSION]);
     } finally {
         $db->query("SELECT RELEASE_LOCK('pallets_migrate')");
@@ -269,6 +270,13 @@ function migrationV2(PDO $db): void
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ){$t}");
     addColumn($db, 'sent_emails', 'mailbox', "VARCHAR(10) NULL");
+}
+
+/** All communication goes to sales@: point an old notify address (info@/admin) there. */
+function migrationV3(PDO $db): void
+{
+    $s = $db->prepare("UPDATE app_settings SET v = ? WHERE k = 'notify_email' AND (v = '' OR v = ? OR v LIKE 'info@%')");
+    $s->execute([SALES_EMAIL, ADMIN_EMAIL]);
 }
 
 /** Categories and the 37 products copied from the old WooCommerce site (database/seed/products.json). */

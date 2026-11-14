@@ -38,6 +38,12 @@ Follow the sections in order. Each step starts with where you do it:
 1. 🟧 cPanel → **Email Accounts** → **Create** → `info@durbanspallets.co.za` → set a password → **Create**.
 2. Again → **Create** → `sales@durbanspallets.co.za` → set a password → **Create**.
 3. Click **Connect Devices** next to one of them and note the **Outgoing Server**, **SMTP Port** (465) and **IMAP Port** (993).
+4. 🟧 cPanel → **Email Deliverability** → next to durbanspallets.co.za press **Manage** → **Install the suggested record** for **DKIM** and for **SPF**.
+5. The host sends outgoing mail through a relay (`sh-das.cloudpap.com`, 102.212.246.222). Gmail rejects mail unless SPF allows it. If **Email Deliverability** still shows SPF problems, edit the TXT record for `durbanspallets.co.za` (🟧 **Zone Editor** → **Manage**) to exactly:
+   `v=spf1 +a +mx +ip4:102.203.116.4 +ip4:102.212.246.222 ~all`
+   Ask the host's support if they publish an `include:` for their relay. Use that instead of the second ip4 if they do.
+
+> All mail goes out from **sales@**. info@ is only shown on the website.
 
 ✅ **Test:** cPanel → **Check Email** → the mailbox opens in Webmail.
 

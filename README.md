@@ -40,12 +40,12 @@ Guest quotes move into the customer's account automatically when they sign up or
 
 ## The two mailboxes
 
-| Mailbox | Sends | Set in |
-|---|---|---|
-| `info@durbanspallets.co.za` | welcome emails, password links; admin login | 🟩 Settings → Email → Info mailbox |
-| `sales@durbanspallets.co.za` | quote emails (PDF), invoices (PDF), enquiry replies, messages; **Admin → Inbox** reads and answers it | 🟩 Settings → Email → Sales mailbox |
+| Mailbox | Role |
+|---|---|
+| `sales@durbanspallets.co.za` | **Sends and receives everything**: quote emails (PDF), invoices (PDF), enquiry replies, messages, password links. New quote requests, enquiries and customer messages are announced here. **Admin → Inbox** reads and answers it. Set in 🟩 Settings → Email. |
+| `info@durbanspallets.co.za` | Shown on the website only; also the admin login username. |
 
-New quote requests, enquiries and customer messages are announced to sales@ (🟩 Settings → Quotes).
+If the web server can't reach `mail.durbanspallets.co.za` it retries through `localhost`, then the server's own mail(). Gmail needs SPF/DKIM to pass — see the setup guide, section 3.
 
 ## Run it locally (XAMPP)
 

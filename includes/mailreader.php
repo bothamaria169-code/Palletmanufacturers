@@ -24,14 +24,17 @@ final class MailReader
         $host = get_setting('imap_host', $c['host']);
         $port = (int) get_setting('imap_port', '993');
         $r = new self();
-        $ctx = stream_context_create(['ssl' => ['verify_peer' => true, 'verify_peer_name' => true, 'SNI_enabled' => true, 'peer_name' => $host]]);
-        $r->s = @stream_socket_client(($port === 993 ? 'ssl://' : 'tcp://') . $host . ':' . $port, $errno, $err, 15, STREAM_CLIENT_CONNECT, $ctx);
-        if (!$r->s) {
-            // Shared hosts often serve a certificate for the server name, not mail.<domain>; retry without the name check.
-            $ctx = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]);
-            $r->s = @stream_socket_client(($port === 993 ? 'ssl://' : 'tcp://') . $host . ':' . $port, $errno, $err, 15, STREAM_CLIENT_CONNECT, $ctx);
+        $err = '';
+        // Try the configured server (with and without the certificate name check), then localhost:
+        // on shared hosting the web server often can't reach its own public mail address.
+        foreach ([[$host, true], [$host, false], ['localhost', false]] as [$try, $verify]) {
+            $ctx = stream_context_create(['ssl' => $verify
+                ? ['verify_peer' => true, 'verify_peer_name' => true, 'SNI_enabled' => true, 'peer_name' => $try]
+                : ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]]);
+            $r->s = @stream_socket_client(($port === 993 ? 'ssl://' : 'tcp://') . $try . ':' . $port, $errno, $err, 10, STREAM_CLIENT_CONNECT, $ctx);
+            if ($r->s) break;
         }
-        if (!$r->s) throw new RuntimeException("Can't reach the mail server {$host}:{$port} ({$err}).");
+        if (!$r->s) throw new RuntimeException("Can't reach the mail server {$host}:{$port} or localhost ({$err}).");
         stream_set_timeout($r->s, 25);
         fgets($r->s);
         [$ok, , $line] = $r->cmd('LOGIN ' . self::q($c['user']) . ' ' . self::q($c['pass']));

@@ -7,31 +7,33 @@ require_once BASE_DIR . '/vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
- * The two mailboxes: "info" (accounts, password links) and "sales" (enquiries,
- * quotes, invoices and inbox replies). Both are set in Admin → Settings → Email,
- * falling back to secrets.php. With no sales password the info mailbox sends.
+ * Every email goes out from ONE mailbox: sales@ (Admin → Settings → Email,
+ * falling back to secrets.php). info@ is only shown on the website.
+ * If no sales@ password is saved yet, an older saved mailbox is used.
  *
  * @return array{host: string, port: int, user: string, pass: string, from: string}
  */
-function mailboxConfig(string $mailbox = 'info'): array
+function mailboxConfig(string $mailbox = 'sales'): array
 {
     $host = get_setting('smtp_host', SMTP_HOST);
     $port = (int) get_setting('smtp_port', (string) SMTP_PORT);
-    if ($mailbox === 'sales') {
-        $user = get_setting('sales_smtp_user', (string) secret('sales_smtp_user', SALES_EMAIL));
-        $pass = get_setting('sales_smtp_pass', (string) secret('sales_smtp_pass', ''));
-        if ($pass !== '') return ['host' => $host, 'port' => $port, 'user' => $user, 'pass' => $pass, 'from' => $user];
+    $user = get_setting('sales_smtp_user', (string) secret('sales_smtp_user', SALES_EMAIL));
+    $pass = get_setting('sales_smtp_pass', (string) secret('sales_smtp_pass', ''));
+    if ($pass === '' && ($oldPass = get_setting('smtp_pass', SMTP_PASS)) !== '') {
+        $user = get_setting('smtp_user', SMTP_USER) ?: $user;
+        $pass = $oldPass;
     }
-    $user = get_setting('smtp_user', SMTP_USER);
-    $pass = get_setting('smtp_pass', SMTP_PASS);
-    return ['host' => $host, 'port' => $port, 'user' => $user, 'pass' => $pass, 'from' => $user !== '' ? $user : biz('biz_email')];
+    return ['host' => $host, 'port' => $port ?: 465, 'user' => $user, 'pass' => $pass, 'from' => $user ?: SALES_EMAIL];
 }
 
 /**
- * Sends one email and logs it in sent_emails (Admin → Emails).
+ * Sends one email from sales@ and logs it in sent_emails (Admin → Sent log).
  *
- * $opt: mailbox ('info'|'sales'), in_reply_to (Message-ID), cc,
- *       files ([[bytes, filename], …] attached from memory, e.g. PDFs).
+ * Tries the mail server in Settings; if the web server can't reach that
+ * address (common on shared hosting) it retries through localhost, and as a
+ * last resort the server's own mail().
+ *
+ * $opt: in_reply_to (Message-ID), cc, files ([[bytes, filename], …] attached from memory).
  * The raw message of the last successful send is kept in $GLOBALS['PM_LAST_MIME']
  * so the inbox can file a copy in Sent.
  *
@@ -40,48 +42,68 @@ function mailboxConfig(string $mailbox = 'info'): array
  */
 function sendMail(string|array $to, string $subject, string $html, array $attachments = [], ?string $replyTo = null, string $kind = '', array $opt = []): string
 {
-    $box = $opt['mailbox'] ?? 'info';
-    $c = mailboxConfig($box);
-    $error = '';
+    $c = mailboxConfig();
     $GLOBALS['PM_LAST_MIME'] = '';
-    try {
-        $mail = new PHPMailer(true);
-        $mail->CharSet = 'UTF-8';
-        if ($c['host'] !== '' && $c['pass'] !== '') {
-            $mail->isSMTP();
-            $mail->Host       = $c['host'];
-            $mail->Port       = $c['port'];
-            $mail->SMTPAuth   = true;
-            $mail->Username   = $c['user'];
-            $mail->Password   = $c['pass'];
-            $mail->SMTPSecure = $c['port'] === 465 ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Timeout    = 20;
-        } else {
-            $mail->isMail();
-        }
-        $mail->setFrom($c['from'], get_setting('mail_from_name', APP_NAME));
-        foreach ((array) $to as $addr) $mail->addAddress($addr);
-        foreach ((array) ($opt['cc'] ?? []) as $addr) $mail->addCC($addr);
-        if ($replyTo) $mail->addReplyTo($replyTo);
-        if (!empty($opt['in_reply_to'])) {
-            $mail->addCustomHeader('In-Reply-To', $opt['in_reply_to']);
-            $mail->addCustomHeader('References', $opt['in_reply_to']);
-        }
-        $mail->Subject = $subject;
-        $mail->isHTML(true);
-        $mail->Body    = $html;
-        $mail->AltBody = trim(html_entity_decode(strip_tags(str_replace(['<br>', '</p>', '</tr>'], "\n", $html))));
-        foreach ($attachments as $file) if (is_file($file)) $mail->addAttachment($file);
-        foreach ($opt['files'] ?? [] as [$bytes, $name]) $mail->addStringAttachment($bytes, $name);
-        $mail->send();
-        $GLOBALS['PM_LAST_MIME'] = $mail->getSentMIMEMessage();
-    } catch (\Throwable $e) {
-        $error = $e->getMessage() ?: 'Unknown mail error';
-        error_log('Pallets mail to ' . implode(',', (array) $to) . ' failed: ' . $error);
+    $routes = [];
+    if ($c['pass'] !== '') {
+        if ($c['host'] !== '') $routes[] = [$c['host'], $c['port'], true];
+        $routes[] = ['localhost', $c['port'], false];
+        if ($c['port'] !== 587) $routes[] = ['localhost', 587, false];
     }
+    $routes[] = ['mail()', 0, false];
+
+    $error = '';
+    $via = '';
+    foreach ($routes as [$host, $port, $verify]) {
+        $error = '';
+        try {
+            $mail = new PHPMailer(true);
+            $mail->CharSet = 'UTF-8';
+            if ($host === 'mail()') {
+                $mail->isMail();
+                $mail->Sender = $c['from'];
+            } else {
+                $mail->isSMTP();
+                $mail->Host       = $host;
+                $mail->Port       = $port;
+                $mail->SMTPAuth   = true;
+                $mail->Username   = $c['user'];
+                $mail->Password   = $c['pass'];
+                $mail->SMTPSecure = $port === 465 ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Timeout    = 12;
+                // localhost presents the server's own certificate, not mail.<domain>.
+                if (!$verify) $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+            }
+            $mail->setFrom($c['from'], get_setting('mail_from_name', APP_NAME));
+            foreach ((array) $to as $addr) $mail->addAddress($addr);
+            foreach ((array) ($opt['cc'] ?? []) as $addr) $mail->addCC($addr);
+            $mail->addReplyTo($replyTo ?: $c['from']);
+            if (!empty($opt['in_reply_to'])) {
+                $mail->addCustomHeader('In-Reply-To', $opt['in_reply_to']);
+                $mail->addCustomHeader('References', $opt['in_reply_to']);
+            }
+            $mail->Subject = $subject;
+            $mail->isHTML(true);
+            $mail->Body    = $html;
+            $mail->AltBody = trim(html_entity_decode(strip_tags(str_replace(['<br>', '</p>', '</tr>'], "\n", $html))));
+            foreach ($attachments as $file) if (is_file($file)) $mail->addAttachment($file);
+            foreach ($opt['files'] ?? [] as [$bytes, $name]) $mail->addStringAttachment($bytes, $name);
+            $mail->send();
+            $GLOBALS['PM_LAST_MIME'] = $mail->getSentMIMEMessage();
+            $via = $host === 'mail()' ? 'mail()' : ($verify ? 'smtp' : 'localhost');
+            break;
+        } catch (\Throwable $e) {
+            $error = $e->getMessage() ?: 'Unknown mail error';
+            // A wrong password won't get better on another route.
+            if (stripos($error, 'authenticate') !== false) break;
+        }
+    }
+    if ($error !== '') error_log('Pallets mail to ' . implode(',', (array) $to) . ' failed: ' . $error);
+    $GLOBALS['PM_LAST_ROUTE'] = $via;
     try {
         getDB()->prepare('INSERT INTO sent_emails (to_email, subject, kind, status, error, mailbox) VALUES (?, ?, ?, ?, ?, ?)')
-            ->execute([mb_substr(implode(', ', (array) $to), 0, 255), mb_substr($subject, 0, 255), $kind ?: null, $error === '' ? 'sent' : 'failed', $error === '' ? null : mb_substr($error, 0, 500), $box]);
+            ->execute([mb_substr(implode(', ', (array) $to), 0, 255), mb_substr($subject, 0, 255), $kind ?: null, $error === '' ? 'sent' : 'failed',
+                       $error === '' ? null : mb_substr($error, 0, 500), mb_substr($via ?: '-', 0, 10)]);
     } catch (\Throwable) {
     }
     return $error;
