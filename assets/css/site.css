@@ -381,3 +381,7 @@
 .mail-text { white-space: normal; font-size: .92rem; line-height: 1.6; color: var(--text); overflow-wrap: anywhere; max-height: 560px; overflow-y: auto; }
 .inbox-grid { grid-template-columns: minmax(0, .9fr) minmax(0, 1.3fr); }
 @media (max-width: 1100px) { .inbox-grid { grid-template-columns: 1fr; } }
+.line-edit th, .line-edit td { padding: .6rem .45rem; }
+.line-edit td.cell-main { min-width: 200px; }
+.line-edit input[type=number] { min-width: 68px; text-align: center; }
+.line-edit .num input:not([type=number]) { min-width: 84px; }

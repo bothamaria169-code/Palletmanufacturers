@@ -62,6 +62,8 @@ New quote requests, enquiries and customer messages are announced to sales@ (�
 
 Full click-by-click steps: **[docs/SETUP-GUIDE.md](docs/SETUP-GUIDE.md)**.
 
+**For the client:** [docs/Durbans-Pallets-Guide.pdf](docs/Durbans-Pallets-Guide.pdf) — customer and admin journeys with screenshots. Rebuild it with `php docs/build-guide.php` (add `--logins` to also make the private login sheet from `_private/logins.json`).
+
 Every change after that: push to GitHub → 🟧 cPanel → **Git™ Version Control** → **Manage** → **Pull or Deploy** → **Update from Remote** → **Deploy HEAD Commit**.
 
 ## Troubleshooting

@@ -138,7 +138,7 @@ adminOpen('quotes', 'Quote ' . $q['ref'], quoteStatusTag($q['status']) . ' &nbsp
   <div>
     <div class="card">
       <div class="card__head"><h2>Lines &amp; prices</h2><p>List price is today's website price. Change the unit price to quote.</p></div>
-      <table class="tbl line-edit"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">List</th><th class="num">Unit price (R)</th><th class="num">Line</th><th></th></tr></thead><tbody>
+      <div style="overflow-x:auto"><table class="tbl line-edit"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">List</th><th class="num">Unit price (R)</th><th class="num">Line</th><th></th></tr></thead><tbody>
         <?php foreach ($q['items'] as $it): $iid = (int) $it['id']; ?>
           <tr>
             <td class="cell-main"><input name="items[<?= $iid ?>][name]" value="<?= e($it['name']) ?>" aria-label="Item name"><input name="items[<?= $iid ?>][notes]" value="<?= e($it['notes']) ?>" placeholder="Notes for the customer" style="margin-top:.3rem;font-size:.8rem" aria-label="Notes"></td>
@@ -150,7 +150,7 @@ adminOpen('quotes', 'Quote ' . $q['ref'], quoteStatusTag($q['status']) . ' &nbsp
           </tr>
         <?php endforeach; ?>
         <?php if (!$q['items']): ?><tr><td colspan="6" class="empty">No lines yet — add pallets below.</td></tr><?php endif; ?>
-      </tbody></table>
+      </tbody></table></div>
       <div class="card__body" style="border-top:1px solid var(--line)">
         <strong style="font-size:.86rem">Add a line</strong>
         <div class="form-grid" style="margin-top:.6rem;grid-template-columns:2fr .6fr">
