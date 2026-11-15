@@ -6,6 +6,6 @@ deployment:
     - export DEPLOYPATH=$HOME/public_html/
     - /bin/mkdir -p $DEPLOYPATH
     - /bin/cp -R admin ajax assets config database includes vendor $DEPLOYPATH
-    - /bin/cp *.php .htaccess robots.txt $DEPLOYPATH
+    - /bin/cp *.php .htaccess robots.txt favicon.ico $DEPLOYPATH
     - /bin/mkdir -p ${DEPLOYPATH}uploads/products
     - /bin/cp uploads/.htaccess ${DEPLOYPATH}uploads/.htaccess
