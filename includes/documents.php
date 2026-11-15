@@ -55,7 +55,7 @@ function documentHtml(string $type, array $d): string
     if ((float) $d['discount'] > 0) $tot .= '<tr><td style="padding:4px 10px;color:#78716c">Discount</td><td style="padding:4px 10px;text-align:right">-' . rand_($d['discount'], true) . '</td></tr>';
     $vatIncl = get_setting('prices_include_vat', '1') === '1';
     if ($vatIncl) $tot .= '<tr><td style="padding:4px 10px;color:#78716c">VAT (15%) included</td><td style="padding:4px 10px;text-align:right;color:#78716c">' . rand_((float) $d['total'] * 15 / 115, true) . '</td></tr>';
-    $tot .= '<tr><td style="padding:10px;border-top:2px solid #1c1917;font-weight:bold;font-size:14px">' . ($isInv ? 'Amount due' : 'Total') . '</td><td style="padding:10px;border-top:2px solid #1c1917;text-align:right;font-weight:bold;font-size:14px">' . rand_($d['total'], true) . '</td></tr>';
+    $tot .= '<tr><td style="padding:10px;border-top:2px solid #10233F;font-weight:bold;font-size:14px">' . ($isInv ? 'Amount due' : 'Total') . '</td><td style="padding:10px;border-top:2px solid #10233F;text-align:right;font-weight:bold;font-size:14px">' . rand_($d['total'], true) . '</td></tr>';
 
     $meta = '';
     foreach ($d['extra'] as $k => $v) if ($v) $meta .= '<tr><td style="color:#78716c;padding:2px 12px 2px 0">' . e($k) . '</td><td style="text-align:right;font-weight:bold">' . e($v) . '</td></tr>';
@@ -71,7 +71,7 @@ function documentHtml(string $type, array $d): string
     return '<!doctype html><html><head><meta charset="utf-8"><title>' . e(($isInv ? 'Invoice ' : 'Quote ') . $d['number']) . '</title>
 <style>@page{margin:28px 32px}body{font-family:DejaVu Sans,Helvetica,Arial,sans-serif;font-size:11px;color:#1c1917;margin:0}table{border-collapse:collapse;width:100%}</style></head><body>
 <table><tr>
- <td style="vertical-align:top"><div style="font-size:22px;font-weight:bold">Durban\'s <span style="color:' . $brand . '">Pallets</span></div>
+ <td style="vertical-align:top"><img src="' . BASE_DIR . '/assets/img/logo.png" style="height:58px">
    <div style="color:#78716c;line-height:1.5;margin-top:4px">' . implode('<br>', array_map('e', companyLines())) . '</div></td>
  <td style="vertical-align:top;text-align:right"><div style="font-size:26px;font-weight:bold;color:' . $brand . ';letter-spacing:1px">' . ($isInv ? 'TAX INVOICE' : 'QUOTATION') . '</div>
    <table style="width:auto;margin-left:auto;margin-top:6px">' . $meta . '</table>' . $stamp . '</td>
@@ -79,7 +79,7 @@ function documentHtml(string $type, array $d): string
 <div style="height:3px;background:' . $brand . ';margin:16px 0"></div>
 <table><tr><td style="vertical-align:top;width:55%"><div style="color:#78716c;font-size:10px;text-transform:uppercase;letter-spacing:1px">' . ($isInv ? 'Bill to' : 'Prepared for') . '</div>
  <div style="margin-top:4px;line-height:1.5">' . implode('<br>', array_map('e', array_filter($d['to']))) . '</div></td></tr></table>
-<table style="margin-top:18px"><thead><tr style="background:#1c1917;color:#fff">
+<table style="margin-top:18px"><thead><tr style="background:#10233F;color:#fff">
  <th style="padding:8px 10px;text-align:left">Description</th><th style="padding:8px 10px;width:50px">Qty</th><th style="padding:8px 10px;text-align:right;width:90px">Unit price</th><th style="padding:8px 10px;text-align:right;width:100px">Amount</th></tr></thead>
  <tbody>' . $rows . '</tbody></table>
 <table style="margin-top:10px"><tr><td style="width:55%;vertical-align:top;padding-right:20px">'

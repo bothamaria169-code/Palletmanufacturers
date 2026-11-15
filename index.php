@@ -22,27 +22,31 @@ $faqSchema = ['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEnt
 siteOpen('Wooden, Plastic & Aluminium Pallets for Sale in Durban | ' . APP_NAME, [
     'description' => 'Pallet manufacturer and supplier in Durban, KZN. Wooden, plastic, aluminium, galvanised and custom pallets at wholesale prices. Request a quote online.',
     'canonical'   => APP_URL . '/',
-    'preload'     => APP_URL . '/assets/img/hero.webp',
+    'preload'     => APP_URL . '/assets/img/hero-banner.webp',
     'schema'      => [$faqSchema],
 ], 'home');
 ?>
-<section class="phero">
+<section class="hero-banner" aria-label="Durban's Pallets — quality pallets, nationwide delivery">
+  <picture>
+    <source media="(max-width: 760px)" srcset="<?= APP_URL ?>/assets/img/hero-banner-900.webp">
+    <img src="<?= APP_URL ?>/assets/img/hero-banner.webp" width="1672" height="941" fetchpriority="high"
+         alt="Durban's Pallets — Pallet Manufacturers. Quality pallets, nationwide delivery: wooden, plastic, aluminium, steel &amp; galvanised and custom pallets. 68 Columbine Place, Glen Anil, Durban, 4051 · info@durbanspallets.co.za">
+  </picture>
+</section>
+<section class="hero-bar">
   <div class="wrap">
     <div>
-      <span class="eyebrow"><i class="fa-solid fa-award"></i> Your #1 pallet manufacturer &amp; supplier</span>
-      <h1>Reliable pallets for <span>every business.</span></h1>
-      <p class="lead">We manufacture and supply wooden, plastic, aluminium and galvanised pallets in standard sizes — and custom sizes built to your exact business requirement.</p>
-      <div class="phero__cta">
-        <a class="btn btn-primary btn-lg" href="<?= APP_URL ?>/shop.php"><i class="fa-solid fa-pallet"></i>Shop pallets</a>
-        <a class="btn btn-ghost btn-lg" href="<?= APP_URL ?>/quote.php"><i class="fa-solid fa-file-invoice"></i>Get a quote</a>
-      </div>
+      <h1>Pallet manufacturers in Durban — <span>wooden, plastic, aluminium &amp; custom pallets.</span></h1>
       <div class="phero__proof">
         <span><i class="fa-solid fa-check"></i><?= $productCount ?> pallet types in stock</span>
-        <span><i class="fa-solid fa-check"></i>Recycled &amp; new timber</span>
+        <span><i class="fa-solid fa-check"></i>Competitive prices</span>
         <span><i class="fa-solid fa-check"></i>Delivered nationwide</span>
       </div>
     </div>
-    <div class="phero__img"><img src="<?= APP_URL ?>/assets/img/hero.webp" alt="Wooden, plastic, aluminium and galvanised pallets" width="1400" height="470" fetchpriority="high"></div>
+    <div class="hero-bar__cta">
+      <a class="btn btn-primary btn-lg" href="<?= APP_URL ?>/shop.php"><i class="fa-solid fa-pallet"></i>Shop pallets</a>
+      <a class="btn btn-ghost btn-lg" href="<?= APP_URL ?>/quote.php"><i class="fa-solid fa-file-invoice"></i>Get a quote</a>
+    </div>
   </div>
 </section>
 

@@ -37,9 +37,10 @@ if (!empty($_GET['pdf'])) {
     exit;
 }
 
-// Printable page: the same document with a small toolbar.
+// Printable page: the same document with a small toolbar (logo from the web, not the file path dompdf uses).
+$html = str_replace(BASE_DIR . '/assets/img/logo.png', APP_URL . '/assets/img/logo.png', $html);
 $self = APP_URL . '/document.php?type=' . $type . '&id=' . $id . ($key !== '' ? '&k=' . rawurlencode($key) : '');
-$bar = '<div class="docbar" style="font-family:system-ui,sans-serif;background:#1c1917;color:#fff;padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">'
+$bar = '<div class="docbar" style="font-family:system-ui,sans-serif;background:#10233F;color:#fff;padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">'
      . '<strong>' . e(APP_NAME) . '</strong><span style="display:flex;gap:8px;flex-wrap:wrap">'
      . '<a href="' . e($self) . '&pdf=1&dl=1" style="background:#b45309;color:#fff;padding:9px 14px;border-radius:8px;text-decoration:none;font-weight:700">Download PDF</a>'
      . '<a href="#" onclick="window.print();return false" style="background:#fff;color:#1c1917;padding:9px 14px;border-radius:8px;text-decoration:none;font-weight:700">Print</a></span></div>'

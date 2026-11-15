@@ -63,7 +63,7 @@
 @media (max-width: 760px) { .site-nav .mainnav { inset: 72px 0 auto 0; max-height: calc(100dvh - 72px); } .site-nav .wrap { gap: .5rem; } .brand__word { font-size: 1.02rem; } .brand__word small { display: none; } }
 
 /* Hero */
-.phero { position: relative; overflow: hidden; color: #fff; background: radial-gradient(900px 500px at 85% 20%, rgba(217,119,6,.35), transparent 60%), radial-gradient(700px 400px at -10% 110%, rgba(146,64,14,.45), transparent 60%), #1c1917; }
+.phero { position: relative; overflow: hidden; color: #fff; background: radial-gradient(900px 500px at 85% 20%, rgba(217,119,6,.35), transparent 60%), radial-gradient(700px 400px at -10% 110%, rgba(146,64,14,.45), transparent 60%), #10233F; }
 .phero::after { content: ''; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px); background-size: 22px 22px; pointer-events: none; }
 .phero .wrap { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1.05fr; gap: clamp(2rem, 4vw, 3.5rem); align-items: center; padding-block: clamp(56px, 8vw, 104px); }
 .phero__img img { width: 100%; height: auto; filter: drop-shadow(0 30px 40px rgba(0,0,0,.45)); }
@@ -385,3 +385,29 @@
 .line-edit td.cell-main { min-width: 200px; }
 .line-edit input[type=number] { min-width: 68px; text-align: center; }
 .line-edit .num input:not([type=number]) { min-width: 84px; }
+
+/* Logo + banner hero (Durban's Pallets brand) */
+.brand { gap: 0; }
+.brand__logo { height: 46px; width: auto; display: block; }
+.only-dark { display: none !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .only-dark { display: block !important; } :root:not([data-theme="light"]) .only-light { display: none !important; } }
+:root[data-theme="dark"] .only-dark { display: block !important; }
+:root[data-theme="dark"] .only-light { display: none !important; }
+.site-foot .brand__logo { height: 52px; }
+.adm-side .brand { padding: .2rem .4rem 1.1rem; }
+.adm-side .brand__logo { height: auto; width: 100%; max-width: 210px; }
+.auth__brand .brand__logo, .auth__mobile-brand .brand__logo { height: 52px; }
+@media (max-width: 760px) { .site-nav .brand__logo { height: 36px; } }
+@media (max-width: 380px) { .site-nav .brand__logo { height: 34px; } }
+.hero-banner { background: #10233F; line-height: 0; }
+.hero-banner img { width: 100%; height: auto; display: block; max-width: 1920px; margin-inline: auto; }
+.hero-bar { background: var(--ink); color: #fff; border-bottom: 4px solid #f5a524; }
+.hero-bar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem 2rem; flex-wrap: wrap; padding-block: 1.4rem; }
+.hero-bar h1 { font-size: clamp(1.25rem, 2.4vw, 1.75rem); font-weight: 800; letter-spacing: -.01em; margin-bottom: .5rem; max-width: 34ch; }
+.hero-bar h1 span { color: #f5a524; }
+.hero-bar .phero__proof { color: rgba(255,255,255,.75); }
+.hero-bar .phero__proof i { color: #f5a524; }
+.hero-bar__cta { display: flex; gap: .7rem; flex-wrap: wrap; }
+.hero-bar .btn-ghost { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.3); color: #fff; }
+.hero-bar .btn-ghost:hover { background: rgba(255,255,255,.16); }
+@media (max-width: 620px) { .hero-bar__cta { width: 100%; } .hero-bar__cta .btn { flex: 1; } }

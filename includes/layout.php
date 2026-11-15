@@ -26,7 +26,7 @@ function pageHead(string $title, array $opt = []): void
   <?php if ($noindex): ?><meta name="robots" content="noindex, nofollow"><?php endif; ?>
   <?php if ($canon): ?><link rel="canonical" href="<?= e($canon) ?>"><?php endif; ?>
   <?php if ($gsc = get_setting('gsc_verification')): ?><meta name="google-site-verification" content="<?= e($gsc) ?>"><?php endif; ?>
-  <meta name="theme-color" content="#1c1917">
+  <meta name="theme-color" content="#10233F">
   <meta property="og:site_name" content="<?= e(APP_NAME) ?>">
   <meta property="og:title" content="<?= e($title) ?>">
   <meta property="og:description" content="<?= e($desc) ?>">
@@ -34,7 +34,9 @@ function pageHead(string $title, array $opt = []): void
   <meta property="og:url" content="<?= e($canon ?: APP_URL) ?>">
   <meta property="og:image" content="<?= e($image) ?>">
   <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" sizes="32x32" href="<?= APP_URL ?>/assets/img/favicon-32.png">
   <link rel="icon" type="image/svg+xml" href="<?= APP_URL ?>/assets/img/mark.svg">
+  <link rel="apple-touch-icon" href="<?= APP_URL ?>/assets/img/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -60,9 +62,10 @@ function pageHead(string $title, array $opt = []): void
 
 function brandMark(string $class = ''): string
 {
-    return '<a href="' . APP_URL . '/" class="brand ' . e($class) . '" aria-label="' . APP_NAME . ' home">'
-         . '<img src="' . APP_URL . '/assets/img/mark.svg" alt="" class="brand__mark" width="36" height="36">'
-         . '<span class="brand__word">Durban\'s<em>Pallets</em><small>' . e(biz('biz_trading')) . '</small></span></a>';
+    $img = fn(string $f, string $cls) => '<img src="' . APP_URL . '/assets/img/' . $f . '.webp" alt="' . e(APP_NAME) . ' — Pallet Manufacturers" class="brand__logo ' . $cls . '" width="640" height="210">';
+    // Dark backgrounds get the white-text logo; elsewhere the navy one, swapped in dark mode.
+    $logos = str_contains($class, 'brand--light') ? $img('logo-light', '') : $img('logo', 'only-light') . $img('logo-light', 'only-dark');
+    return '<a href="' . APP_URL . '/" class="brand ' . e($class) . '" aria-label="' . e(APP_NAME) . ' home">' . $logos . '</a>';
 }
 
 function flashHtml(): string
@@ -81,7 +84,7 @@ function businessSchema(): array
     return [
         '@context' => 'https://schema.org', '@type' => 'LocalBusiness', '@id' => APP_URL . '/#business',
         'name' => APP_NAME, 'alternateName' => biz('biz_trading'), 'url' => APP_URL . '/', 'image' => APP_URL . '/assets/img/og.jpg',
-        'logo' => APP_URL . '/assets/img/mark.svg',
+        'logo' => APP_URL . '/assets/img/logo.png',
         'telephone' => biz('biz_phone'), 'email' => biz('biz_email'), 'priceRange' => 'R50 – R5000',
         'address' => ['@type' => 'PostalAddress', 'streetAddress' => '68 Columbine Place, Glen Anil', 'addressLocality' => 'Durban',
                       'addressRegion' => 'KwaZulu-Natal', 'postalCode' => '4051', 'addressCountry' => 'ZA'],

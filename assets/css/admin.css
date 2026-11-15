@@ -162,3 +162,5 @@ body.adm { display: grid; grid-template-columns: 252px 1fr; min-height: 100vh; }
 }
 .adm-side .brand__word { font-size: .98rem; }
 .adm-side .brand { padding-right: 0; }
+
+.adm-side .brand__logo { height: auto; width: 100%; max-width: 210px; }

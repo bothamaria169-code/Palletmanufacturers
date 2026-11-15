@@ -124,7 +124,7 @@ function emailLayout(string $heading, string $bodyHtml, ?string $buttonText = nu
 <!doctype html><html><body style="margin:0;background:#f3f5fa;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#0e1726">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5fa;padding:28px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e3e8f2">
-<tr><td style="background:#1c1917;padding:20px 28px;font-size:20px;font-weight:800;color:#ffffff">Durban's<span style="color:#f59e0b">Pallets</span></td></tr>
+<tr><td style="background:#10233F;padding:16px 28px"><img src="{$url}/assets/img/logo-light.png" alt="Durban's Pallets" width="180" style="display:block;border:0;width:180px;max-width:100%;height:auto;color:#ffffff;font-size:20px;font-weight:800"></td></tr>
 <tr><td style="padding:30px 28px 26px;font-size:15px;line-height:1.6">
 {$h1}
 {$bodyHtml}
