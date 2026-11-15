@@ -26,7 +26,7 @@ siteOpen('About Us – Pallet Stockists & Recyclers in Durban | ' . APP_NAME, [
       <p>We also up-cycle material by stripping down pallets and crates into planks for reassembly into standard and custom sizes. This lets us offer pallets and related products at affordable prices while keeping a high quality standard.</p>
       <p>It also means we don't buy any virgin material — reducing our carbon footprint, and that of our customers.</p>
     </div>
-    <div class="split__img"><img src="<?= APP_URL ?>/assets/img/cat-wooden.webp" alt="Stack of recycled timber pallets" width="480" height="700" loading="lazy" style="object-fit:contain;background:#fff"></div>
+    <div class="split__img" style="aspect-ratio:4/5"><img src="<?= APP_URL ?>/assets/img/about-yard.webp" alt="Durban's Pallets team member carrying a repaired wooden pallet in the pallet yard" width="494" height="619" loading="lazy"></div>
   </div>
 </section>
 
@@ -43,7 +43,7 @@ siteOpen('About Us – Pallet Stockists & Recyclers in Durban | ' . APP_NAME, [
 
 <section class="section tight">
   <div class="wrap split split--rev">
-    <div class="split__img"><img src="<?= APP_URL ?>/assets/img/hero.webp" alt="Wooden, plastic and metal pallets" width="1400" height="470" loading="lazy" style="object-fit:contain;background:var(--ink)"></div>
+    <div class="split__img" style="aspect-ratio:1/1"><img src="<?= APP_URL ?>/assets/img/about-factory.webp" alt="Pallet production: finished pallets stacked, staff assembling a pallet, cut timber blocks and the factory floor" width="552" height="555" loading="lazy"></div>
     <div>
       <span class="kicker">What we do</span>
       <h2>Pallets for every warehouse, truck and forklift</h2>
@@ -56,6 +56,22 @@ siteOpen('About Us – Pallet Stockists & Recyclers in Durban | ' . APP_NAME, [
       </ul>
       <a class="btn btn-primary" href="<?= APP_URL ?>/contact.php">We look forward to hearing from you <i class="fa-solid fa-arrow-right"></i></a>
     </div>
+  </div>
+</section>
+<section class="section tight section--alt">
+  <div class="wrap split">
+    <div>
+      <span class="kicker">We buy used pallets</span>
+      <h2>Got pallets you don't need?</h2>
+      <p>We buy used pallets from commercial and industrial businesses, sort them, repair what can be repaired and put them back to work. Timber that can't be saved is stripped into planks for our standard and custom pallets.</p>
+      <ul class="ticks">
+        <li><i class="fa-solid fa-circle-check"></i>Clear space in your yard or warehouse</li>
+        <li><i class="fa-solid fa-circle-check"></i>Nothing goes to waste — less timber in landfill</li>
+        <li><i class="fa-solid fa-circle-check"></i>Tell us how many, their condition and where they are</li>
+      </ul>
+      <a class="btn btn-primary" href="<?= e(waLink('Hi, I have used pallets to sell.')) ?>" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i>Sell us your pallets</a>
+    </div>
+    <div class="split__img" style="aspect-ratio:1/1"><img src="<?= APP_URL ?>/assets/img/about-used-pallets.webp" alt="Stacks of used wooden pallets sorted for repair and resale" width="556" height="551" loading="lazy"></div>
   </div>
 </section>
 <?php siteClose();
