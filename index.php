@@ -100,7 +100,7 @@ siteOpen('Wooden, Plastic & Aluminium Pallets for Sale in Durban | ' . APP_NAME,
 
 <section class="section section--alt">
   <div class="wrap split">
-    <div class="split__img"><img src="<?= APP_URL ?>/assets/img/banner.webp" alt="Stacks of recycled timber pallets" width="1000" height="363" loading="lazy" style="object-fit:contain;background:#fff"></div>
+    <div class="split__img"><img src="<?= APP_URL ?>/assets/img/warehouse.webp" alt="Stack of recycled wooden pallets in a Durban warehouse with a forklift and racking" width="1200" height="1200" loading="lazy" style="object-position:center 75%"></div>
     <div>
       <span class="kicker">Who we are</span>
       <h2>Stockists of pallets for every application</h2>
