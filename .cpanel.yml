@@ -9,3 +9,4 @@ deployment:
     - /bin/cp *.php .htaccess robots.txt favicon.ico $DEPLOYPATH
     - /bin/mkdir -p ${DEPLOYPATH}uploads/products
     - /bin/cp uploads/.htaccess ${DEPLOYPATH}uploads/.htaccess
+    - /bin/cp assets/.htaccess ${DEPLOYPATH}assets/.htaccess
